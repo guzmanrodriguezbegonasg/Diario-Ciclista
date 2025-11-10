@@ -1,12 +1,12 @@
-const CACHE_NAME = 'diario-ciclista-cache-v8'; // VERSIÓN FINAL Y CORRECTA
+const CACHE_NAME = 'diario-ciclista-cache-v9'; // VERSIÓN FINAL Y CORRECTA
 // Lista de archivos MÍNIMA y ESENCIAL.
 // El resto de los archivos (.tsx, etc.) se cachearán dinámicamente la primera vez que se pidan.
 const APP_SHELL_FILES = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/icon-192.svg',
-  '/icon-512.svg'
+  '/icon-192.png',
+  '/icon-512.png'
 ];
 
 // Evento de instalación: cachear el app shell
