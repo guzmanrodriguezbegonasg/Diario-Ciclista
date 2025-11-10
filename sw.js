@@ -1,8 +1,15 @@
-const CACHE_NAME = 'diario-ciclista-cache-v2'; // Incremented cache version
+const CACHE_NAME = 'diario-ciclista-cache-v3'; // Incremented cache version for update
 const APP_SHELL_FILES = [
   '/',
   '/index.html',
   '/index.tsx',
+  '/App.tsx',
+  '/types.ts',
+  '/components/Header.tsx',
+  '/components/Stats.tsx',
+  '/components/EntryForm.tsx',
+  '/components/EntryList.tsx',
+  '/components/EntryItem.tsx',
   '/icon-192.png',
   '/icon-512.png'
 ];
@@ -15,7 +22,9 @@ self.addEventListener('install', event => {
         console.log('Service Worker: Caching App Shell');
         return cache.addAll(APP_SHELL_FILES);
       })
-      .then(() => self.skipWaiting())
+      .then(() => {
+        return self.skipWaiting();
+      })
   );
 });
 
@@ -29,37 +38,45 @@ self.addEventListener('activate', event => {
           .map(cacheName => caches.delete(cacheName))
       );
     })
-    .then(() => self.clients.claim())
+    .then(() => {
+        return self.clients.claim();
+    })
   );
 });
 
-// Fetch event: Cache-first strategy
+// Fetch event: Cache-first, falling back to network
 self.addEventListener('fetch', event => {
-  // We only want to cache GET requests.
   if (event.request.method !== 'GET') {
     return;
   }
 
-  // Strategy: Network falling back to cache
   event.respondWith(
-    fetch(event.request)
-      .then(networkResponse => {
-        // Check if we received a valid response
-        if (networkResponse && networkResponse.status === 200) {
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME)
-            .then(cache => {
-              cache.put(event.request, responseToCache);
-            });
+    caches.match(event.request)
+      .then(cachedResponse => {
+        // If we have a match in the cache, return it.
+        if (cachedResponse) {
+          return cachedResponse;
         }
-        return networkResponse;
+
+        // If no match, fetch from the network.
+        return fetch(event.request).then(networkResponse => {
+            if (!networkResponse || networkResponse.status !== 200) {
+              return networkResponse;
+            }
+
+            const responseToCache = networkResponse.clone();
+
+            caches.open(CACHE_NAME)
+              .then(cache => {
+                cache.put(event.request, responseToCache);
+              });
+            
+            return networkResponse;
+          }
+        ).catch(error => {
+            console.error('Fetching failed:', error);
+            throw error;
+        });
       })
-      .catch(() => {
-        // Network failed, try the cache
-        return caches.match(event.request)
-          .then(cachedResponse => {
-            return cachedResponse;
-          });
-      })
-    );
+  );
 });
