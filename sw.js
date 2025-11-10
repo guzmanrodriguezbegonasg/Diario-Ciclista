@@ -1,20 +1,12 @@
-const CACHE_NAME = 'diario-ciclista-cache-v7'; // Incremented cache version
+const CACHE_NAME = 'diario-ciclista-cache-v8'; // VERSIÓN FINAL Y CORRECTA
+// Lista de archivos MÍNIMA y ESENCIAL.
+// El resto de los archivos (.tsx, etc.) se cachearán dinámicamente la primera vez que se pidan.
 const APP_SHELL_FILES = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/icon-192.svg', // Correct icon path
-  '/icon-512.svg', // Correct icon path
-  // Archivos de código fuente necesarios para el shell de la aplicación.
-  '/index.tsx',
-  '/App.tsx',
-  '/types.ts',
-  '/components/Header.tsx',
-  '/components/Stats.tsx',
-  '/components/EntryForm.tsx',
-  '/components/EntryList.tsx',
-  '/components/EntryItem.tsx',
-  '/components/InstallPWAButton.tsx'
+  '/icon-192.svg',
+  '/icon-512.svg'
 ];
 
 // Evento de instalación: cachear el app shell
@@ -22,7 +14,7 @@ self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('Service Worker: Caching App Shell');
+        console.log('Service Worker: Caching App Shell essentials');
         return cache.addAll(APP_SHELL_FILES);
       })
       .then(() => {
@@ -30,6 +22,7 @@ self.addEventListener('install', event => {
         return self.skipWaiting();
       })
       .catch(error => {
+          // Este log es crucial para depurar. Si esto aparece, la instalación falló.
           console.error("Falló la instalación del Service Worker:", error);
       })
   );
@@ -47,15 +40,16 @@ self.addEventListener('activate', event => {
     })
     .then(() => {
         // Indicar al service worker activo que tome el control de la página inmediatamente.
+        console.log('Service Worker: Claiming clients');
         return self.clients.claim();
     })
   );
 });
 
-// Evento de fetch: Primero caché, y si no, red (Cache-first)
+// Evento de fetch: Primero caché, y si no, red (Cache-first, with dynamic caching)
 self.addEventListener('fetch', event => {
-  // Solo queremos manejar las peticiones GET
-  if (event.request.method !== 'GET') {
+  // Solo queremos manejar las peticiones GET para nuestra app.
+  if (event.request.method !== 'GET' || !event.request.url.startsWith(self.location.origin)) {
     return;
   }
 
@@ -79,7 +73,8 @@ self.addEventListener('fetch', event => {
 
             caches.open(CACHE_NAME)
               .then(cache => {
-                // Cachear el nuevo recurso para futuras peticiones.
+                // Cachear el nuevo recurso (ej. los archivos .tsx) para futuras peticiones.
+                console.log('Service Worker: Caching new resource:', event.request.url);
                 cache.put(event.request, responseToCache);
               });
             
@@ -87,7 +82,7 @@ self.addEventListener('fetch', event => {
           }
         ).catch(error => {
             console.error('Fallo en el fetch del Service Worker:', error);
-            // Esto es crucial para que el navegador sepa que el fetch falló si no hay red ni caché.
+            // Si no hay red ni caché, la petición fallará. Esto es normal en modo offline.
             throw error;
         });
       })
