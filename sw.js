@@ -1,12 +1,21 @@
-const CACHE_NAME = 'diario-ciclista-cache-v5'; // Incremented cache version
+const CACHE_NAME = 'diario-ciclista-cache-v6'; // Incremented cache version
 const APP_SHELL_FILES = [
   '/',
   '/index.html',
   '/manifest.json',
   '/icon-192.png',
-  '/icon-512.png'
-  // Los archivos TSX/JS ahora son cacheados por el manejador 'fetch' en la primera solicitud, no durante la instalación.
-  // Esto es más robusto y evita errores si los archivos fuente no son directamente accesibles.
+  '/icon-512.png',
+  // Archivos de código fuente necesarios para el shell de la aplicación.
+  // Esto es CRUCIAL para que la PWA sea instalable.
+  '/index.tsx',
+  '/App.tsx',
+  '/types.ts',
+  '/components/Header.tsx',
+  '/components/Stats.tsx',
+  '/components/EntryForm.tsx',
+  '/components/EntryList.tsx',
+  '/components/EntryItem.tsx',
+  '/components/InstallPWAButton.tsx'
 ];
 
 // Evento de instalación: cachear el app shell
