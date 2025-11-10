@@ -1,22 +1,15 @@
-const CACHE_NAME = 'diario-ciclista-cache-v4'; // Incremented cache version for update
+const CACHE_NAME = 'diario-ciclista-cache-v5'; // Incremented cache version
 const APP_SHELL_FILES = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/index.tsx',
-  '/App.tsx',
-  '/types.ts',
-  '/components/Header.tsx',
-  '/components/Stats.tsx',
-  '/components/EntryForm.tsx',
-  '/components/EntryList.tsx',
-  '/components/EntryItem.tsx',
-  '/components/InstallPWAButton.tsx',
   '/icon-192.png',
   '/icon-512.png'
+  // Los archivos TSX/JS ahora son cacheados por el manejador 'fetch' en la primera solicitud, no durante la instalación.
+  // Esto es más robusto y evita errores si los archivos fuente no son directamente accesibles.
 ];
 
-// Install event: cache the app shell
+// Evento de instalación: cachear el app shell
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -25,12 +18,16 @@ self.addEventListener('install', event => {
         return cache.addAll(APP_SHELL_FILES);
       })
       .then(() => {
+        // Forzar al service worker en espera a convertirse en el service worker activo.
         return self.skipWaiting();
+      })
+      .catch(error => {
+          console.error("Falló la instalación del Service Worker:", error);
       })
   );
 });
 
-// Activate event: clean up old caches
+// Evento de activación: limpiar cachés antiguas
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(cacheNames => {
@@ -41,13 +38,15 @@ self.addEventListener('activate', event => {
       );
     })
     .then(() => {
+        // Indicar al service worker activo que tome el control de la página inmediatamente.
         return self.clients.claim();
     })
   );
 });
 
-// Fetch event: Cache-first, falling back to network
+// Evento de fetch: Primero caché, y si no, red (Cache-first)
 self.addEventListener('fetch', event => {
+  // Solo queremos manejar las peticiones GET
   if (event.request.method !== 'GET') {
     return;
   }
@@ -55,28 +54,32 @@ self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request)
       .then(cachedResponse => {
-        // If we have a match in the cache, return it.
+        // Si tenemos una coincidencia en la caché, la devolvemos.
         if (cachedResponse) {
           return cachedResponse;
         }
 
-        // If no match, fetch from the network.
+        // Si no hay coincidencia, vamos a la red.
         return fetch(event.request).then(networkResponse => {
+            // Comprobar si recibimos una respuesta válida
             if (!networkResponse || networkResponse.status !== 200) {
               return networkResponse;
             }
-
+            
+            // Necesitamos clonar la respuesta porque es un stream y solo se puede consumir una vez.
             const responseToCache = networkResponse.clone();
 
             caches.open(CACHE_NAME)
               .then(cache => {
+                // Cachear el nuevo recurso para futuras peticiones.
                 cache.put(event.request, responseToCache);
               });
             
             return networkResponse;
           }
         ).catch(error => {
-            console.error('Fetching failed:', error);
+            console.error('Fallo en el fetch del Service Worker:', error);
+            // Esto es crucial para que el navegador sepa que el fetch falló si no hay red ni caché.
             throw error;
         });
       })
