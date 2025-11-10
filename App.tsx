@@ -4,6 +4,7 @@ import Header from './components/Header';
 import Stats from './components/Stats';
 import EntryForm from './components/EntryForm';
 import EntryList from './components/EntryList';
+import InstallPWAButton from './components/InstallPWAButton';
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -79,6 +80,34 @@ const App: React.FC = () => {
 
   const [editingEntry, setEditingEntry] = useState<TrainingEntry | null>(null);
   const [entryToDelete, setEntryToDelete] = useState<string | null>(null);
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
+
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      console.log('beforeinstallprompt event fired');
+      setInstallPrompt(e);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+  
+  const handleInstallClick = useCallback(async () => {
+    if (!installPrompt) {
+      return;
+    }
+    installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+    console.log(`User response to the install prompt: ${outcome}`);
+    // We hide the button after the prompt is shown, regardless of the outcome.
+    setInstallPrompt(null);
+  }, [installPrompt]);
+
 
   useEffect(() => {
     try {
@@ -211,6 +240,7 @@ const App: React.FC = () => {
         title="Confirmar Eliminación"
         message="¿Estás seguro de que quieres eliminar esta salida? Esta acción no se puede deshacer."
       />
+      {installPrompt && <InstallPWAButton onInstallClick={handleInstallClick} />}
     </div>
   );
 };
