@@ -25,6 +25,20 @@
         background: #475569; /* slate-600 */
       }
     </style>
+    <script>
+      // Captura el evento que indica que la app se puede instalar.
+      // Esto se hace aquí para evitar condiciones de carrera con la carga de React.
+      window.deferredPrompt = null;
+      window.addEventListener('beforeinstallprompt', (e) => {
+        // Previene que aparezca la mini-barra de información en el móvil.
+        e.preventDefault();
+        // Guarda el evento para que pueda ser disparado más tarde.
+        window.deferredPrompt = e;
+        // Notifica a la app que el botón de instalación puede mostrarse.
+        window.dispatchEvent(new CustomEvent('pwa-installable'));
+        console.log('`beforeinstallprompt` event was fired and captured.');
+      });
+    </script>
   <script type="importmap">
 {
   "imports": {

@@ -1,7 +1,8 @@
-const CACHE_NAME = 'diario-ciclista-cache-v3'; // Incremented cache version for update
+const CACHE_NAME = 'diario-ciclista-cache-v4'; // Incremented cache version for update
 const APP_SHELL_FILES = [
   '/',
   '/index.html',
+  '/manifest.json',
   '/index.tsx',
   '/App.tsx',
   '/types.ts',
@@ -10,6 +11,7 @@ const APP_SHELL_FILES = [
   '/components/EntryForm.tsx',
   '/components/EntryList.tsx',
   '/components/EntryItem.tsx',
+  '/components/InstallPWAButton.tsx',
   '/icon-192.png',
   '/icon-512.png'
 ];

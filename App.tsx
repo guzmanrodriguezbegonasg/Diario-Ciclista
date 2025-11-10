@@ -66,6 +66,12 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({ isOpen, onConfirm, onCancel
   );
 };
 
+// Extiende la interfaz Window para incluir nuestra propiedad `deferredPrompt`
+declare global {
+  interface Window {
+    deferredPrompt: any;
+  }
+}
 
 const App: React.FC = () => {
   const [entries, setEntries] = useState<TrainingEntry[]>(() => {
@@ -80,33 +86,44 @@ const App: React.FC = () => {
 
   const [editingEntry, setEditingEntry] = useState<TrainingEntry | null>(null);
   const [entryToDelete, setEntryToDelete] = useState<string | null>(null);
-  const [installPrompt, setInstallPrompt] = useState<any>(null);
-
+  const [canInstall, setCanInstall] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(
+    () => window.matchMedia('(display-mode: standalone)').matches
+  );
 
   useEffect(() => {
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      console.log('beforeinstallprompt event fired');
-      setInstallPrompt(e);
+    const handleInstallable = () => {
+      console.log('pwa-installable event received by React');
+      setCanInstall(true);
     };
 
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('pwa-installable', handleInstallable);
+    
+    // Comprueba también si el prompt ya está disponible cuando el componente se monta
+    if (window.deferredPrompt) {
+        handleInstallable();
+    }
 
     return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('pwa-installable', handleInstallable);
     };
   }, []);
   
   const handleInstallClick = useCallback(async () => {
-    if (!installPrompt) {
+    const promptEvent = window.deferredPrompt;
+    if (!promptEvent) {
       return;
     }
-    installPrompt.prompt();
-    const { outcome } = await installPrompt.userChoice;
+    // Muestra el aviso de instalación.
+    promptEvent.prompt();
+    // Espera a que el usuario responda.
+    const { outcome } = await promptEvent.userChoice;
     console.log(`User response to the install prompt: ${outcome}`);
-    // We hide the button after the prompt is shown, regardless of the outcome.
-    setInstallPrompt(null);
-  }, [installPrompt]);
+    // Ya hemos usado el prompt, y no podemos usarlo de nuevo.
+    window.deferredPrompt = null;
+    // Oculta el botón de instalación.
+    setCanInstall(false);
+  }, []);
 
 
   useEffect(() => {
@@ -179,8 +196,6 @@ const App: React.FC = () => {
     let yearlyTotal = 0;
 
     entries.forEach(entry => {
-      // Create a date object at midnight in the local timezone from the 'YYYY-MM-DD' string.
-      // This avoids timezone-related off-by-one errors.
       const parts = entry.date.split('-').map(p => parseInt(p, 10));
       const entryDate = new Date(parts[0], parts[1] - 1, parts[2]);
 
@@ -191,7 +206,6 @@ const App: React.FC = () => {
         }
       }
 
-      // Check if the entry date is within the last 7 days (inclusive of today)
       if (entryDate >= sevenDaysAgo && entryDate <= today) {
         weeklyTotal += entry.distance;
       }
@@ -240,7 +254,7 @@ const App: React.FC = () => {
         title="Confirmar Eliminación"
         message="¿Estás seguro de que quieres eliminar esta salida? Esta acción no se puede deshacer."
       />
-      {installPrompt && <InstallPWAButton onInstallClick={handleInstallClick} />}
+      {!isStandalone && canInstall && <InstallPWAButton onInstallClick={handleInstallClick} />}
     </div>
   );
 };
