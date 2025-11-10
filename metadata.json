@@ -1,0 +1,5 @@
+{
+  "name": "Diario Ciclista",
+  "description": "Una aplicación web para registrar tus entrenamientos de ciclismo, hacer un seguimiento de los kilómetros y ver los totales mensuales y anuales.",
+  "requestFramePermissions": []
+}
