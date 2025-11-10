@@ -1,12 +1,11 @@
-const CACHE_NAME = 'diario-ciclista-cache-v6'; // Incremented cache version
+const CACHE_NAME = 'diario-ciclista-cache-v7'; // Incremented cache version
 const APP_SHELL_FILES = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png',
+  '/icon-192.svg', // Correct icon path
+  '/icon-512.svg', // Correct icon path
   // Archivos de código fuente necesarios para el shell de la aplicación.
-  // Esto es CRUCIAL para que la PWA sea instalable.
   '/index.tsx',
   '/App.tsx',
   '/types.ts',
