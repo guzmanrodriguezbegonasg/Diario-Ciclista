@@ -1,10 +1,10 @@
-const CACHE_NAME = 'diario-ciclista-cache-v1';
+const CACHE_NAME = 'diario-ciclista-cache-v2'; // Incremented cache version
 const APP_SHELL_FILES = [
   '/',
   '/index.html',
   '/index.tsx',
-  '/icon-192.svg',
-  '/icon-512.svg'
+  '/icon-192.png',
+  '/icon-512.png'
 ];
 
 // Install event: cache the app shell
@@ -40,40 +40,26 @@ self.addEventListener('fetch', event => {
     return;
   }
 
+  // Strategy: Network falling back to cache
   event.respondWith(
-    caches.match(event.request)
-      .then(cachedResponse => {
-        // Cache hit - return response
-        if (cachedResponse) {
-          return cachedResponse;
+    fetch(event.request)
+      .then(networkResponse => {
+        // Check if we received a valid response
+        if (networkResponse && networkResponse.status === 200) {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME)
+            .then(cache => {
+              cache.put(event.request, responseToCache);
+            });
         }
-
-        // Not in cache - fetch from network, cache, and return
-        return fetch(event.request).then(
-          networkResponse => {
-            // Check if we received a valid response
-            if (!networkResponse || networkResponse.status !== 200) {
-              return networkResponse;
-            }
-
-            // IMPORTANT: Clone the response. A response is a stream
-            // and because we want the browser to consume the response
-            // as well as the cache consuming the response, we need
-            // to clone it so we have two streams.
-            const responseToCache = networkResponse.clone();
-
-            caches.open(CACHE_NAME)
-              .then(cache => {
-                cache.put(event.request, responseToCache);
-              });
-
-            return networkResponse;
-          }
-        ).catch(error => {
-            // This is where you could return a fallback page if the network fails
-            console.error('Fetching failed:', error);
-            throw error;
-        })
+        return networkResponse;
+      })
+      .catch(() => {
+        // Network failed, try the cache
+        return caches.match(event.request)
+          .then(cachedResponse => {
+            return cachedResponse;
+          });
       })
     );
 });
