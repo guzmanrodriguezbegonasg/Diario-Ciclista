@@ -87,6 +87,8 @@ const App: React.FC = () => {
   const [editingEntry, setEditingEntry] = useState<TrainingEntry | null>(null);
   const [entryToDelete, setEntryToDelete] = useState<string | null>(null);
   const [canInstall, setCanInstall] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+
   const [isStandalone, setIsStandalone] = useState(
     () => window.matchMedia('(display-mode: standalone)').matches
   );
@@ -146,7 +148,7 @@ const App: React.FC = () => {
         id: Date.now().toString(),
         ...entryData,
       };
-      setEntries(prevEntries => [newEntry, ...prevEntries]);
+      setEntries(prevEntries => [newEntry, ...prevEntries].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     }
     setEditingEntry(null); // Exit editing mode
   }, []);
@@ -171,6 +173,10 @@ const App: React.FC = () => {
 
   const handleSelectEntryToEdit = useCallback((entry: TrainingEntry) => {
     setEditingEntry(entry);
+    // Aseguramos que el calendario muestre el día de la entrada que se está editando
+    const [year, month, day] = entry.date.split('-').map(Number);
+    // new Date() usa el mes basado en 0 (0=Enero), por eso restamos 1
+    setSelectedDate(new Date(year, month - 1, day));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
   
@@ -242,6 +248,8 @@ const App: React.FC = () => {
                 entries={entries} 
                 onDeleteEntry={requestDeleteEntry} 
                 onEditEntry={handleSelectEntryToEdit}
+                selectedDate={selectedDate}
+                setSelectedDate={setSelectedDate}
               />
             </div>
           </div>
