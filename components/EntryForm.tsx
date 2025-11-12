@@ -10,6 +10,7 @@ interface EntryFormProps {
 const EntryForm: React.FC<EntryFormProps> = ({ onSaveEntry, editingEntry, onCancelEdit }) => {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [distance, setDistance] = useState('');
+  const [duration, setDuration] = useState('');
   const [notes, setNotes] = useState('');
   const [error, setError] = useState('');
 
@@ -19,6 +20,7 @@ const EntryForm: React.FC<EntryFormProps> = ({ onSaveEntry, editingEntry, onCanc
     if (editingEntry) {
       setDate(editingEntry.date);
       setDistance(String(editingEntry.distance));
+      setDuration(editingEntry.duration || '');
       setNotes(editingEntry.notes);
       setError('');
     } else {
@@ -26,6 +28,7 @@ const EntryForm: React.FC<EntryFormProps> = ({ onSaveEntry, editingEntry, onCanc
       // This doesn't run after adding a new entry, which is why we handle it in handleSubmit.
       setDate(new Date().toISOString().split('T')[0]);
       setDistance('');
+      setDuration('');
       setNotes('');
       setError('');
     }
@@ -40,13 +43,14 @@ const EntryForm: React.FC<EntryFormProps> = ({ onSaveEntry, editingEntry, onCanc
     }
     setError('');
     onSaveEntry(
-      { date, distance: distanceNum, notes },
+      { date, distance: distanceNum, duration, notes },
       editingEntry ? editingEntry.id : undefined
     );
 
     // If a new entry was just added, clear the form for the next one.
     if (!isEditing) {
       setDistance('');
+      setDuration('');
       setNotes('');
       setDate(new Date().toISOString().split('T')[0]);
     }
@@ -78,6 +82,17 @@ const EntryForm: React.FC<EntryFormProps> = ({ onSaveEntry, editingEntry, onCanc
             placeholder="Ej: 50.5"
             step="0.1"
             min="0"
+            className="w-full bg-slate-900 border border-slate-600 rounded-md p-2 text-white focus:ring-2 focus:ring-amber-400 focus:border-amber-400"
+          />
+        </div>
+        <div>
+          <label htmlFor="duration" className="block text-sm font-medium text-slate-300 mb-1">Duración</label>
+          <input
+            type="text"
+            id="duration"
+            value={duration}
+            onChange={(e) => setDuration(e.target.value)}
+            placeholder="Ej: 2h 30m"
             className="w-full bg-slate-900 border border-slate-600 rounded-md p-2 text-white focus:ring-2 focus:ring-amber-400 focus:border-amber-400"
           />
         </div>

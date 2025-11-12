@@ -18,7 +18,17 @@ const EntryItem: React.FC<EntryItemProps> = ({ entry, onDelete, onEdit }) => {
       <div className="flex justify-between items-start">
         <div>
           <p className="font-bold text-white">{formatDate(entry.date)}</p>
-          <p className="text-amber-400 text-lg font-semibold">{entry.distance} km</p>
+          <div className="flex items-baseline space-x-4 mt-1">
+            <p className="text-amber-400 text-lg font-semibold">{entry.distance} km</p>
+            {entry.duration && (
+              <div className="flex items-center text-slate-300 text-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.414-1.415L11 9.586V6z" clipRule="evenodd" />
+                </svg>
+                <span>{entry.duration}</span>
+              </div>
+            )}
+          </div>
         </div>
         <div className="flex items-center space-x-3">
           <button
